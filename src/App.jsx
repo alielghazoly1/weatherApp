@@ -1,4 +1,6 @@
 import './App.css';
+import './i18n'; // لازم أول حاجة
+
 // react
 import { useEffect, useState } from 'react';
 // materaial UI components
@@ -10,7 +12,8 @@ import Container from '@mui/material/Container';
 // external libraries
 import axios from 'axios';
 import moment from 'moment/min/moment-with-locales';
-moment.locale("ar");
+import { useTranslation } from 'react-i18next';
+moment.locale('ar');
 const theme = createTheme({
   typography: {
     fontFamily: ['IBM'],
@@ -18,6 +21,9 @@ const theme = createTheme({
 });
 let cancelAxios = null;
 function App() {
+  const { t, i18n } = useTranslation();
+  
+  // states ====
   let [dateAndTime, setDateAndTime] = useState('');
   let [temp, setTemp] = useState({
     number: null,
@@ -26,8 +32,34 @@ function App() {
     max: null,
     icon: null,
   });
+  let [locale, setLocal] = useState('ar');
+  //  event handelars
+  function handeleLanguageClick() {
+    if (locale === 'ar') {
+      setLocal('en');
+      i18n.changeLanguage('en');
+      moment.locale('en');
+    } else {
+      setLocal('ar');
+      i18n.changeLanguage('ar');
+      moment.locale('ar');
+    }
+      const interval = setInterval(() => {
+      setDateAndTime(moment().format('dddd - D MMMM YYYY - h:mm:ss a'));
+    }, 1000);
+    return () => clearInterval(interval);
+  }
   useEffect(() => {
-    setDateAndTime(moment().format("dddd - D MMMM YYYY - h:mm:ss a"));
+    const interval = setInterval(() => {
+      setDateAndTime(moment().format('dddd - D MMMM YYYY - h:mm:ss a'));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+  useEffect(() => {
+    i18n.changeLanguage(locale);
+  }, []);
+  useEffect(() => {
     axios
       .get(
         'https://api.openweathermap.org/data/2.5/weather?lat=30.033333&lon=31.233334&appid=38c8f743dc9dad3b44f625edcbe1f760',
@@ -103,7 +135,7 @@ function App() {
                       gutterBottom
                       style={{ marginRight: '20px', fontWeight: '600' }}
                     >
-                      القاهرة
+                      {t('city')}
                     </Typography>
                     <Typography
                       variant="h5"
@@ -155,8 +187,8 @@ function App() {
                           alignItems: 'center',
                         }}
                       >
-                        <h5> الصغري: {temp.min} </h5>
-                        <h5> الكبري: {temp.max} </h5>
+                        <h5> {t("min")}: {temp.min} </h5>
+                        <h5> {t("max")}: {temp.max} </h5>
                       </div>
                       {/*==== temp ====*/}
                     </div>
@@ -177,10 +209,11 @@ function App() {
                 }}
               >
                 <Button
+                  onClick={handeleLanguageClick}
                   variant="text"
                   style={{ color: 'white', marginTop: '20px' }}
                 >
-                  انجليزي
+                 {t('lang')}
                 </Button>
               </div>
               {/*========= translation contener====== */}
