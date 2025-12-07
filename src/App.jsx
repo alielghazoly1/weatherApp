@@ -1,37 +1,35 @@
 import './App.css';
-import './i18n'; // لازم أول حاجة
-
+import './i18n'; 
 // react
 import { useEffect, useState } from 'react';
 // materaial UI components
+import CircularProgress from '@mui/material/CircularProgress';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import CloudIcon from '@mui/icons-material/Cloud';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 // external libraries
-import axios from 'axios';
 import moment from 'moment/min/moment-with-locales';
 import { useTranslation } from 'react-i18next';
+// react-redux
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchWeather } from './weatherApiSlice';
 moment.locale('ar');
 const theme = createTheme({
   typography: {
     fontFamily: ['IBM'],
   },
 });
-let cancelAxios = null;
 function App() {
+  // redux
+  const dispatch = useDispatch();
+  const isLoading = useSelector((state) => state.weather.isLoading);
+  const temp = useSelector((state) => state.weather.weather);
   const { t, i18n } = useTranslation();
-  
+
   // states ====
   let [dateAndTime, setDateAndTime] = useState('');
-  let [temp, setTemp] = useState({
-    number: null,
-    description: '',
-    min: null,
-    max: null,
-    icon: null,
-  });
   let [locale, setLocal] = useState('ar');
   //  event handelars
   function handeleLanguageClick() {
@@ -44,7 +42,7 @@ function App() {
       i18n.changeLanguage('ar');
       moment.locale('ar');
     }
-      const interval = setInterval(() => {
+    const interval = setInterval(() => {
       setDateAndTime(moment().format('dddd - D MMMM YYYY - h:mm:ss a'));
     }, 1000);
     return () => clearInterval(interval);
@@ -53,44 +51,16 @@ function App() {
     const interval = setInterval(() => {
       setDateAndTime(moment().format('dddd - D MMMM YYYY - h:mm:ss a'));
     }, 1000);
-
+    
     return () => clearInterval(interval);
   }, []);
+  
   useEffect(() => {
+    dispatch(fetchWeather());
     i18n.changeLanguage(locale);
   }, []);
   useEffect(() => {
-    axios
-      .get(
-        'https://api.openweathermap.org/data/2.5/weather?lat=30.033333&lon=31.233334&appid=38c8f743dc9dad3b44f625edcbe1f760',
-        {
-          cancelToken: new axios.CancelToken((c) => {
-            cancelAxios = c;
-          }),
-        }
-      )
-      .then(function (response) {
-        // handle success
-        let responseTemp = Math.round(response.data.main.temp - 272.15);
-        let min = Math.round(response.data.main.temp_min - 272.15);
-        let max = Math.round(response.data.main.temp_max - 272.15);
-        let description = response.data.weather[0].description;
-        let responseIcon = response.data.weather[0].icon;
-        setTemp({
-          number: responseTemp,
-          min: min,
-          max: max,
-          description: description,
-          icon: `https://openweathermap.org/img/wn/${responseIcon}@2x.png`,
-        });
-      })
-      .catch(function (error) {
-        // handle error
-        console.log(error);
-      });
-    return () => {
-      cancelAxios();
-    };
+   
   }, []);
   return (
     <>
@@ -161,6 +131,7 @@ function App() {
                           alignItems: 'center',
                         }}
                       >
+                        {isLoading ? <CircularProgress style={{color:"white"}}/> : null}
                         <Typography
                           variant="h1"
                           gutterBottom
@@ -187,8 +158,14 @@ function App() {
                           alignItems: 'center',
                         }}
                       >
-                        <h5> {t("min")}: {temp.min} </h5>
-                        <h5> {t("max")}: {temp.max} </h5>
+                        <h5>
+                          {' '}
+                          {t('min')}: {temp.min}{' '}
+                        </h5>
+                        <h5>
+                          {' '}
+                          {t('max')}: {temp.max}{' '}
+                        </h5>
                       </div>
                       {/*==== temp ====*/}
                     </div>
@@ -213,7 +190,7 @@ function App() {
                   variant="text"
                   style={{ color: 'white', marginTop: '20px' }}
                 >
-                 {t('lang')}
+                  {t('lang')}
                 </Button>
               </div>
               {/*========= translation contener====== */}
